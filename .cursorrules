@@ -1,0 +1,44 @@
+# TestSense — Cursor Rules
+
+## What this project is
+A CLI tool that analyzes TypeScript/JavaScript codebases and identifies test coverage gaps.
+It does NOT generate tests blindly — it finds what's critically missing and explains why.
+
+The core question it answers: "Given my codebase, my existing tests, and this PR — what's the most important thing I'm not testing?"
+
+## Stack
+- TypeScript (strict mode)
+- Node.js 18+
+- ts-morph (AST parsing)
+- @anthropic-ai/sdk (Claude Sonnet for LLM reasoning)
+- commander (CLI)
+- vitest (tests)
+- tsup (build)
+
+## Architecture
+The pipeline has 7 stages, each in its own file:
+1. collector.ts — file discovery (source files + test files)
+2. parser/ — AST analysis → CodebaseGraph (pages, API routes, components, hooks)
+3. test-mapper.ts — existing tests → TestCoverageMap
+4. summarizer.ts — compresses graph + coverage into <4K token LLM context
+5. analyzer.ts — LLM call #1 → GapReport (ranked list of missing tests)
+6. generator.ts — LLM call #2 → Playwright test stubs for top gaps
+7. renderer.ts — formats output (terminal / JSON / markdown)
+
+## Key design decisions
+- DO NOT send raw source code to the LLM. Build a semantic graph first, send the graph summary.
+- The summarizer is the critical performance gate — keep LLM context under 4,000 tokens per run.
+- Tiered parsing: parse pages/routes/stores first, hooks/utils only if under file limit.
+- Target cost: under $0.05 per full analysis run at Claude Sonnet pricing.
+- CLI-first: no server, no database, no auth in Phase 1.
+
+## Code conventions
+- No default exports — named exports only
+- Types in types.ts, not inline in implementation files
+- Pure functions preferred — side effects only in cli.ts and renderer.ts
+- Error messages should tell the user what to do, not just what went wrong
+- No console.log in library code — use the renderer
+
+## What Phase 1 is
+Only packages/cli matters right now. packages/action and packages/mcp are stubs for future phases.
+Do not add SaaS features, auth, or database logic — that belongs in a separate private repo.
