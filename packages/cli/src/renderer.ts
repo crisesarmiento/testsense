@@ -7,6 +7,7 @@ const PRIORITY_COLOR = {
   medium: chalk.cyan,
 }
 
+// Renders the final gap report — pipeline progress is handled by Listr2 in cli.ts
 export function render(
   report: GapReport,
   stubPath: string | null,
@@ -36,6 +37,7 @@ function renderTerminal(report: GapReport, stubPath: string | null): void {
     console.log(chalk.gray('─'.repeat(60)))
     console.log(`  ${color(gap.priority.toUpperCase())}  ${chalk.white.bold(gap.title)}`)
     console.log(chalk.gray('─'.repeat(60)))
+    console.log(`  ${chalk.gray('Flow:')} ${gap.flow}`)
     console.log(`  ${gap.why}`)
     console.log('')
   }
